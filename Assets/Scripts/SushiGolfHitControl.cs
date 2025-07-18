@@ -1,23 +1,41 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class SushiGolfHitControl : MonoBehaviour
 {
     [Header("Aiming & Hit Settings")]
     public float rotationSpeed = 100f;
     public float minPower = 5f;
-    public float maxPower = 20f;
+    public float maxPower = 100f;
     public float powerChangeSpeed = 2f;
     public Rigidbody rb;
 
     [Header("UI and Visuals")]
-    public Slider powerBar;
+    public GameObject powerBar;
+    private RectTransform _powerBarRectTransform;
+    private int powerBarHeight;
+    public Image fillBar;
+    private RectTransform _fillBarRectTransform;
     public GameObject directionArrow;
 
     private bool isCharging = false;
     private float currentPower = 0f;
     private bool powerIncreasing = true;
     private bool hasHit = false;
+
+    private void Start()
+    {
+        _fillBarRectTransform = fillBar.GetComponent<RectTransform>();
+        
+        //lets define our scale between power and actual bar size
+        _powerBarRectTransform = powerBar.GetComponent<RectTransform>();
+        powerBarHeight = (int)_powerBarRectTransform.sizeDelta.y; 
+        Debug.Log(powerBarHeight);
+        
+
+    }
 
     void Update()
     {
@@ -34,10 +52,19 @@ public class SushiGolfHitControl : MonoBehaviour
             currentPower = minPower;
             powerIncreasing = true;
 
+            //put the powerbar next to the ball
+            Vector3 worldPos = transform.position + new Vector3(10,10);
+            Vector3 screenPos = (Camera.main.WorldToScreenPoint(transform.position)) + new Vector3(50,1,0);
+            Debug.Log(screenPos);
+            _powerBarRectTransform.position = screenPos;
+            
             if (powerBar != null)
             {
                 powerBar.gameObject.SetActive(true);
-                powerBar.value = 0f;
+               
+                Vector2 size = _fillBarRectTransform.sizeDelta;
+                size.y = minPower;  // e.g., 100f
+                _fillBarRectTransform.sizeDelta = size;
             }
         }
 
@@ -65,11 +92,15 @@ public class SushiGolfHitControl : MonoBehaviour
 
             if (powerBar != null)
             {
-                powerBar.value = (currentPower - minPower) / (maxPower - minPower);
+                //assuming the same scale of 100 for now jut to test
+                Vector2 size = _fillBarRectTransform.sizeDelta;
+                size.y = (currentPower*powerBarHeight) / maxPower;  // e.g., 100f
+                _fillBarRectTransform.sizeDelta = size;
+                //powerBar.value = (currentPower - minPower) / (maxPower - minPower);
             }
 
             // --- Release hit on second spacebar press ---
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyUp(KeyCode.Space))
             {
                 Vector3 hitDirection = transform.forward;
                 rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
@@ -77,7 +108,7 @@ public class SushiGolfHitControl : MonoBehaviour
                 isCharging = false;
                 hasHit = true;
 
-                if (powerBar != null)
+                if (fillBar != null)
                     powerBar.gameObject.SetActive(false);
 
                 if (directionArrow != null)
