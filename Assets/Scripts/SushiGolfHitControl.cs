@@ -7,9 +7,9 @@ public class SushiGolfHitControl : MonoBehaviour
 {
     [Header("Aiming & Hit Settings")]
     public float rotationSpeed = 100f;
-    public float minPower = 5f;
-    public float maxPower = 100f;
-    public float powerChangeSpeed = 2f;
+    public float minPower = 4f;
+    public float maxPower = 20f;
+    public float powerChangeSpeed = 8f;
     public Rigidbody rb;
 
     [Header("UI and Visuals")]
@@ -20,6 +20,15 @@ public class SushiGolfHitControl : MonoBehaviour
     private RectTransform _fillBarRectTransform;
     public GameObject directionArrow;
 
+    [Header("Audio Clips")]
+    public AudioClip[] hitSounds;
+    public AudioClip rollLoopSound;
+    public AudioClip[] pickupSounds;
+    public AudioClip[] fartSounds;
+
+    private AudioSource oneShotSource;
+    private AudioSource rollLoopSource;
+
     private bool isCharging = false;
     private float currentPower = 0f;
     private bool powerIncreasing = true;
@@ -28,47 +37,57 @@ public class SushiGolfHitControl : MonoBehaviour
     private void Start()
     {
         _fillBarRectTransform = fillBar.GetComponent<RectTransform>();
-        
-        //lets define our scale between power and actual bar size
         _powerBarRectTransform = powerBar.GetComponent<RectTransform>();
-        powerBarHeight = (int)_powerBarRectTransform.sizeDelta.y; 
-        Debug.Log(powerBarHeight);
-        
+        powerBarHeight = (int)_powerBarRectTransform.sizeDelta.y;
 
+        oneShotSource = gameObject.AddComponent<AudioSource>();
+        rollLoopSource = gameObject.AddComponent<AudioSource>();
+        rollLoopSource.clip = rollLoopSound;
+        rollLoopSource.loop = true;
+        rollLoopSource.volume = 0.5f;
+        rollLoopSource.playOnAwake = false;
     }
 
     void Update()
     {
-        if (hasHit) return;
+        if (hasHit)
+        {
+            float speed = rb.linearVelocity.magnitude;
+            if (speed > 0.5f)
+            {
+                if (!rollLoopSource.isPlaying)
+                    rollLoopSource.Play();
+            }
+            else
+            {
+                if (rollLoopSource.isPlaying)
+                    rollLoopSource.Stop();
+            }
 
-        // --- Aiming ---
+            return;
+        }
+
         float rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
         transform.Rotate(Vector3.up, rotation);
 
-        // --- Charging ---
         if (Input.GetKeyDown(KeyCode.Space) && !isCharging)
         {
             isCharging = true;
             currentPower = minPower;
             powerIncreasing = true;
 
-            //put the powerbar next to the ball
-            Vector3 worldPos = transform.position + new Vector3(10,10);
-            Vector3 screenPos = (Camera.main.WorldToScreenPoint(transform.position)) + new Vector3(50,1,0);
-            Debug.Log(screenPos);
+            Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(50, 1, 0);
             _powerBarRectTransform.position = screenPos;
-            
+
             if (powerBar != null)
             {
                 powerBar.gameObject.SetActive(true);
-               
                 Vector2 size = _fillBarRectTransform.sizeDelta;
-                size.y = minPower;  // e.g., 100f
+                size.y = minPower;
                 _fillBarRectTransform.sizeDelta = size;
             }
         }
 
-        // --- Power fluctuation while holding ---
         if (isCharging)
         {
             if (powerIncreasing)
@@ -92,14 +111,11 @@ public class SushiGolfHitControl : MonoBehaviour
 
             if (powerBar != null)
             {
-                //assuming the same scale of 100 for now jut to test
                 Vector2 size = _fillBarRectTransform.sizeDelta;
-                size.y = (currentPower*powerBarHeight) / maxPower;  // e.g., 100f
+                size.y = (currentPower * powerBarHeight) / maxPower;
                 _fillBarRectTransform.sizeDelta = size;
-                //powerBar.value = (currentPower - minPower) / (maxPower - minPower);
             }
 
-            // --- Release hit on second spacebar press ---
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 Vector3 hitDirection = transform.forward;
@@ -108,15 +124,21 @@ public class SushiGolfHitControl : MonoBehaviour
                 isCharging = false;
                 hasHit = true;
 
-                if (fillBar != null)
+                if (powerBar != null)
                     powerBar.gameObject.SetActive(false);
 
                 if (directionArrow != null)
                     directionArrow.SetActive(false);
+
+                if (hitSounds.Length > 0)
+                {
+                    int index = Random.Range(0, hitSounds.Length);
+                    oneShotSource.pitch = Random.Range(0.95f, 1.05f);
+                    oneShotSource.PlayOneShot(hitSounds[index]);
+                }
             }
         }
 
-        // Keep arrow pointing forward
         if (directionArrow != null)
         {
             directionArrow.transform.localPosition = new Vector3(0, 0.5f, 1f);
@@ -124,36 +146,43 @@ public class SushiGolfHitControl : MonoBehaviour
         }
     }
 
-    // 🍣 Katamari-style ingredient sticking logic
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ingredient"))
         {
-            // Get the Rigidbody and Collider
             Rigidbody ingredientRb = collision.rigidbody;
             Collider ingredientCol = collision.collider;
 
             if (ingredientRb != null)
-            {
                 ingredientRb.isKinematic = true;
-            }
 
             if (ingredientCol != null)
-            {
-                ingredientCol.enabled = false; // Disable future collisions
-            }
+                ingredientCol.enabled = false;
 
-            // Stick to rice ball
             collision.transform.SetParent(transform);
 
-            // Position it at point of contact
             ContactPoint contact = collision.contacts[0];
             Vector3 localPoint = transform.InverseTransformPoint(contact.point);
             collision.transform.localPosition = localPoint;
 
-            // Optional: add some rotation and offset for more organic feel
             collision.transform.localRotation = Random.rotation;
             collision.transform.localPosition += Random.insideUnitSphere * 0.1f;
+
+            // 🔊 Play random pickup sound
+            if (pickupSounds.Length > 0)
+            {
+                int index = Random.Range(0, pickupSounds.Length);
+                oneShotSource.pitch = Random.Range(0.95f, 1.05f);
+                oneShotSource.PlayOneShot(pickupSounds[index]);
+            }
+
+            // 💨 Play random fart sound if it's poop
+            if (collision.gameObject.name.Contains("Poop") && fartSounds.Length > 0)
+            {
+                int index = Random.Range(0, fartSounds.Length);
+                oneShotSource.pitch = Random.Range(0.9f, 1.1f);
+                oneShotSource.PlayOneShot(fartSounds[index]);
+            }
         }
     }
 }
