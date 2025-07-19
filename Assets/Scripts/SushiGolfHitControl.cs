@@ -12,20 +12,14 @@ public enum PlayerState
 }
 public class SushiGolfHitControl : MonoBehaviour
 {
+    private bool _isCurrentPlayer = false;
     public PlayerState playerState = PlayerState.Aiming;
     [Header("Aiming & Hit Settings")]
-    public float rotationSpeed = 100f;
-    public float minPower = 4f;
-    public float maxPower = 20f;
-    public float powerChangeSpeed = 8f;
+    private float _minPower, _maxPower, _rotationSpeed, _powerChangeSpeed;
     public Rigidbody rb;
 
     [Header("UI and Visuals")]
-    public GameObject powerBar;
-    private RectTransform _powerBarRectTransform;
-    private int powerBarHeight;
-    public Image fillBar;
-    private RectTransform _fillBarRectTransform;
+    
     public GameObject directionArrow;
 
     [Header("Audio Clips")]
@@ -44,10 +38,7 @@ public class SushiGolfHitControl : MonoBehaviour
 
     private void Start()
     {
-        _fillBarRectTransform = fillBar.GetComponent<RectTransform>();
-        _powerBarRectTransform = powerBar.GetComponent<RectTransform>();
-        powerBarHeight = (int)_powerBarRectTransform.sizeDelta.y;
-
+        
         oneShotSource = gameObject.AddComponent<AudioSource>();
         rollLoopSource = gameObject.AddComponent<AudioSource>();
         rollLoopSource.clip = rollLoopSound;
@@ -75,87 +66,79 @@ public class SushiGolfHitControl : MonoBehaviour
             return;
         }
 
-        float rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
-        transform.Rotate(Vector3.up, rotation);
-
-        if (Input.GetKeyDown(KeyCode.Space) && !isCharging)
+        //This player is the active one
+        if (_isCurrentPlayer)
         {
-            isCharging = true;
-            currentPower = minPower;
-            powerIncreasing = true;
+            float rotation = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
+            transform.Rotate(Vector3.up, rotation);
 
-            playerState = PlayerState.Aiming;
-
-            Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(50, 1, 0);
-            _powerBarRectTransform.position = screenPos;
-
-            if (powerBar != null)
+            if (Input.GetKeyDown(KeyCode.Space) && !isCharging)
             {
-                powerBar.gameObject.SetActive(true);
-                Vector2 size = _fillBarRectTransform.sizeDelta;
-                size.y = minPower;
-                _fillBarRectTransform.sizeDelta = size;
+                UIManager.Instance?.PositionPowerBar();
+                isCharging = true;
+                currentPower = _minPower;
+                powerIncreasing = true;
+
+                playerState = PlayerState.Aiming;
+
+            }
+            
+            if (isCharging)
+            {
+                playerState = PlayerState.Aiming;
+                if (powerIncreasing)
+                {
+                    currentPower += _powerChangeSpeed * Time.deltaTime;
+                    if (currentPower >= _maxPower)
+                    {
+                        currentPower = _maxPower;
+                        powerIncreasing = false;
+                    }
+                }
+                else
+                {
+                    currentPower -= _powerChangeSpeed * Time.deltaTime;
+                    if (currentPower <= _minPower)
+                    {
+                        currentPower = _minPower;
+                        powerIncreasing = true;
+                    }
+                }
+                
+                UIManager.Instance?.UpdatePowerBar(currentPower);
+
+                if (Input.GetKeyUp(KeyCode.Space))
+                {
+                    playerState = PlayerState.Rolling;
+                    Vector3 hitDirection = transform.forward;
+                    rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
+
+                    isCharging = false;
+                    hasHit = true;
+                    
+                    UIManager.Instance?.TogglePowerBar(false);
+                        
+
+                    if (directionArrow != null)
+                        directionArrow.SetActive(false);
+
+                    if (hitSounds.Length > 0)
+                    {
+                        int index = Random.Range(0, hitSounds.Length);
+                        oneShotSource.pitch = Random.Range(0.95f, 1.05f);
+                        oneShotSource.PlayOneShot(hitSounds[index]);
+                    }
+                }
+            }
+
+            if (directionArrow != null)
+            {
+                directionArrow.transform.localPosition = new Vector3(0, 0.5f, 1f);
+                directionArrow.transform.localRotation = Quaternion.identity;
             }
         }
 
-        if (isCharging)
-        {
-            playerState = PlayerState.Aiming;
-            if (powerIncreasing)
-            {
-                currentPower += powerChangeSpeed * Time.deltaTime;
-                if (currentPower >= maxPower)
-                {
-                    currentPower = maxPower;
-                    powerIncreasing = false;
-                }
-            }
-            else
-            {
-                currentPower -= powerChangeSpeed * Time.deltaTime;
-                if (currentPower <= minPower)
-                {
-                    currentPower = minPower;
-                    powerIncreasing = true;
-                }
-            }
 
-            if (powerBar != null)
-            {
-                Vector2 size = _fillBarRectTransform.sizeDelta;
-                size.y = (currentPower * powerBarHeight) / maxPower;
-                _fillBarRectTransform.sizeDelta = size;
-            }
-
-            if (Input.GetKeyUp(KeyCode.Space))
-            {
-                playerState = PlayerState.Rolling;
-                Vector3 hitDirection = transform.forward;
-                rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
-
-                isCharging = false;
-                hasHit = true;
-
-                if (powerBar != null)
-                    powerBar.gameObject.SetActive(false);
-
-                if (directionArrow != null)
-                    directionArrow.SetActive(false);
-
-                if (hitSounds.Length > 0)
-                {
-                    int index = Random.Range(0, hitSounds.Length);
-                    oneShotSource.pitch = Random.Range(0.95f, 1.05f);
-                    oneShotSource.PlayOneShot(hitSounds[index]);
-                }
-            }
-        }
-
-        if (directionArrow != null)
-        {
-            directionArrow.transform.localPosition = new Vector3(0, 0.5f, 1f);
-            directionArrow.transform.localRotation = Quaternion.identity;
-        }
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -196,5 +179,19 @@ public class SushiGolfHitControl : MonoBehaviour
                 oneShotSource.PlayOneShot(fartSounds[index]);
             }
         }
+    }
+
+    //Setu from game manager
+    public void Setup(float minPower, float maxPower, float rotationSpeed, float powerChangeSpeed)
+    {
+        _minPower = minPower;
+        _maxPower = maxPower;
+        _rotationSpeed = rotationSpeed;
+        _powerChangeSpeed = powerChangeSpeed;
+    }
+
+    public void ToggleIsCurrentPlayer(bool isCurrentPlayer)
+    {
+        _isCurrentPlayer = isCurrentPlayer;
     }
 }
