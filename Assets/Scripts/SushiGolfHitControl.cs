@@ -21,9 +21,6 @@ public class SushiGolfHitControl : MonoBehaviour
     private float _minPower, _maxPower, _rotationSpeed, _powerChangeSpeed;
     public Rigidbody rb;
 
-    [Header("UI and Visuals")]
-    
-    public GameObject directionArrow;
 
     [Header("Audio Clips")]
     public AudioClip[] hitSounds;
@@ -39,6 +36,8 @@ public class SushiGolfHitControl : MonoBehaviour
     private bool powerIncreasing = true;
     private bool hasHit = false;
     private bool _canCheckStopRolling = false;
+    bool isFirstTurn = true;
+    private float _currentYaw = 0f;
 
     private void Start()
     {
@@ -84,11 +83,7 @@ public class SushiGolfHitControl : MonoBehaviour
               
             }
             
-            if (directionArrow != null)
-            {
-                directionArrow.transform.localPosition = new Vector3(0, 0.5f, 1f);
-                directionArrow.transform.localRotation = Quaternion.identity;
-            }
+            
             
         }
 
@@ -111,15 +106,18 @@ public class SushiGolfHitControl : MonoBehaviour
     
     IEnumerator StartRolling()
     {
+        _currentYaw = 0;
+        if (isFirstTurn)
+        {
+            isFirstTurn = false;
+            rb.useGravity = true;
+        }
         playerState = PlayerState.Rolling;
         Vector3 hitDirection = transform.forward;
         rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
 
         hasHit = true;
         UIManager.Instance?.TogglePowerBar(false);
-
-        if (directionArrow != null)
-            directionArrow.SetActive(false);
 
         if (hitSounds.Length > 0)
         {
@@ -130,6 +128,14 @@ public class SushiGolfHitControl : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         _canCheckStopRolling = true;
        
+    }
+    
+    //On the first turn our ball is static
+    IEnumerator HandleFirstTurnKick()
+    {
+        rb.isKinematic = false;
+        yield return new WaitForFixedUpdate(); // Wait until physics update
+        rb.AddForce(Vector3.forward * 10f, ForceMode.Impulse);
     }
 
     private void HandlePlayerRolling()
@@ -149,8 +155,18 @@ public class SushiGolfHitControl : MonoBehaviour
 
     private void HandlePlayerAiming()
     {
-        float rotation = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
-        transform.Rotate(Vector3.up, rotation);
+        
+        float rotationInput = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
+        _currentYaw += rotationInput;
+        // Apply to ball player
+        transform.rotation = Quaternion.Euler(0f, _currentYaw, 0f);
+
+        // Now lets point the stupid arrow
+        //Vector3 lookDirection = Quaternion.Euler(0f, _currentYaw, 0f) * Vector3.forward;
+        //directionArrow.transform.rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
+        
+        //float rotation = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
+        //transform.Rotate(Vector3.up, rotation, Space.World);
 
         if (Input.GetKeyDown(KeyCode.Space) )
         {
@@ -159,6 +175,7 @@ public class SushiGolfHitControl : MonoBehaviour
             powerIncreasing = true;
 
             playerState = PlayerState.Charging;
+            UIManager.Instance?.ShowDirectionArrow(false);
 
         }
     }
@@ -188,8 +205,6 @@ public class SushiGolfHitControl : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.Space))
         {
-            
-
             StartCoroutine(StartRolling());
         }
         
@@ -248,5 +263,7 @@ public class SushiGolfHitControl : MonoBehaviour
     {
         _isCurrentPlayer = isCurrentPlayer;
         playerState = PlayerState.Aiming;
+        _currentYaw = transform.eulerAngles.y;
+        rb.linearVelocity = Vector3.zero;
     }
 }
