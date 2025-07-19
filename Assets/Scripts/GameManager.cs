@@ -6,8 +6,6 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     
-    
-
     private void Awake() 
     { 
         // If there is an instance, and it's not me, delete myself.
@@ -26,6 +24,7 @@ public class GameManager : MonoBehaviour
     public float maxPower = 20f;
     public float rotationSpeed = 100f;
     public float powerChangeSpeed = 8f;
+    [SerializeField] private Transform[] initialPlayerPositions;
     
     
     [SerializeField] private GameObject playerPrefab;
@@ -33,7 +32,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Transform cameraPivot;
     [SerializeField] private SushiGolfHitControl[] players;
     public SushiGolfHitControl currentPlayerBall;
-    private int _currentPlayerIndex;
+    private int _currentPlayerIndex =0;
 
     private Vector3 _cameraPivotAngles;
 
@@ -66,8 +65,11 @@ public class GameManager : MonoBehaviour
         //calcualte points
         
         //change player
-        currentPlayerBall.ToggleIsCurrentPlayer(false);
-        _currentPlayerIndex++;
+        if (currentPlayerBall != null)
+        {
+            currentPlayerBall.ToggleIsCurrentPlayer(false);
+            _currentPlayerIndex++;
+        }
         if(_currentPlayerIndex >= players.Length)
         {
             _currentPlayerIndex = 0; 
@@ -81,6 +83,7 @@ public class GameManager : MonoBehaviour
         {
             currentPlayerBall = players[_currentPlayerIndex];
             currentPlayerBall.ToggleIsCurrentPlayer(true);
+            UIManager.Instance?.ShowDirectionArrow(true);
         });
         
     }
@@ -100,23 +103,16 @@ public class GameManager : MonoBehaviour
         // Create players
         for (int i = 0; i < numPlayers; i++)
         {
-            float x = Random.Range(0f, terrainWidth);
-            float z = Random.Range(0f, terrainLength);
-
-            float worldX = terrainPosition.x + x;
-            float worldZ = terrainPosition.z + z;
-            float worldY = arena.SampleHeight(new Vector3(worldX, 0, worldZ)) + terrainPosition.y;
-
-            Vector3 spawnPosition = new Vector3(worldX, worldY, worldZ);
-            GameObject newPlayer = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
+            GameObject newPlayer = Instantiate(playerPrefab, initialPlayerPositions[i].position,initialPlayerPositions[i].rotation);
+            //make our ball not move
+            Rigidbody rb = newPlayer.GetComponent<Rigidbody>();
+            rb.useGravity = false;
             SushiGolfHitControl newPlayerSushiControl = newPlayer.GetComponent<SushiGolfHitControl>();
             newPlayerSushiControl.Setup(minPower, maxPower, rotationSpeed, powerChangeSpeed);
             players[i] = newPlayerSushiControl;
         }
 
         // Set the first player as the current player
-        currentPlayerBall = players[0];
-        currentPlayerBall.ToggleIsCurrentPlayer(true);
-        _currentPlayerIndex = 0;
+        ChangePlayer();
     }
 }

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    [SerializeField] private GameObject directionArrow;
     [Header("Power bar")]
     public GameObject powerBar;
     private float _maxPower, _minPower = 0;
@@ -45,7 +46,27 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       
+        if(GameManager.Instance?.currentPlayerBall != null && GameManager.Instance?.currentPlayerBall.playerState == PlayerState.Aiming)
+        {
+            PointDirectionArrow();
+        }
+    }
+    
+    private void PointDirectionArrow()
+    {
+        Vector3 direction = GameManager.Instance.currentPlayerBall.transform.forward;
+        directionArrow.transform.rotation = Quaternion.LookRotation(direction);
+        //position the arrow near ball
+        Transform ball = GameManager.Instance.currentPlayerBall.transform;
+        directionArrow.transform.position = ball.position + (ball.forward * 2);
+    }
+    
+    public void ShowDirectionArrow(bool show)
+    {
+        if (directionArrow != null)
+        {
+            directionArrow.SetActive(show);
+        }
     }
 
     public void StartGame()
