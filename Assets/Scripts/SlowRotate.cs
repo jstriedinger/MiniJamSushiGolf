@@ -2,11 +2,12 @@ using UnityEngine;
 
 public class FloatingIngredient : MonoBehaviour
 {
-    public float rotationSpeed = 30f;      // Degrees per second
-    public float bobAmplitude = 0.25f;     // Height of the bobbing
-    public float bobFrequency = 1f;        // Speed of the bobbing
+    public float rotationSpeed = 30f;
+    public float bobAmplitude = 0.25f;
+    public float bobFrequency = 1f;
 
     private Vector3 startPosition;
+    private bool isCollected = false;
 
     void Start()
     {
@@ -15,11 +16,18 @@ public class FloatingIngredient : MonoBehaviour
 
     void Update()
     {
-        // Y-axis rotation
+        if (isCollected) return;
+
+        // Rotate around Y axis
         transform.Rotate(0f, rotationSpeed * Time.deltaTime, 0f);
 
-        // Vertical bobbing
+        // Bob up and down
         float newY = startPosition.y + Mathf.Sin(Time.time * bobFrequency) * bobAmplitude;
         transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+    }
+
+    public void StopFloating()
+    {
+        isCollected = true;
     }
 }

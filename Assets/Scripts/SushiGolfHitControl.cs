@@ -4,23 +4,22 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-
 public enum PlayerState
 {
     None,
     Aiming,
     Charging,
     Rolling
-    
 }
+
 public class SushiGolfHitControl : MonoBehaviour
 {
     private bool _isCurrentPlayer = false;
     public PlayerState playerState = PlayerState.Charging;
+
     [Header("Aiming & Hit Settings")]
     private float _minPower, _maxPower, _rotationSpeed, _powerChangeSpeed;
     public Rigidbody rb;
-
 
     [Header("Audio Clips")]
     public AudioClip[] hitSounds;
@@ -31,17 +30,15 @@ public class SushiGolfHitControl : MonoBehaviour
     private AudioSource oneShotSource;
     private AudioSource rollLoopSource;
 
-    private bool isCharging = false;
     private float currentPower = 0f;
     private bool powerIncreasing = true;
     private bool hasHit = false;
     private bool _canCheckStopRolling = false;
-    bool isFirstTurn = true;
+    private bool isFirstTurn = true;
     private float _currentYaw = 0f;
 
     private void Start()
     {
-        
         oneShotSource = gameObject.AddComponent<AudioSource>();
         rollLoopSource = gameObject.AddComponent<AudioSource>();
         rollLoopSource.clip = rollLoopSound;
@@ -69,7 +66,6 @@ public class SushiGolfHitControl : MonoBehaviour
             return;
         }
 
-        //This player is the active one
         if (_isCurrentPlayer)
         {
             switch (playerState)
@@ -80,30 +76,18 @@ public class SushiGolfHitControl : MonoBehaviour
                 case PlayerState.Charging:
                     HandlePlayerCharging();
                     break;
-              
             }
-            
-            
-            
         }
-
-
     }
 
     private void FixedUpdate()
     {
-        if (_isCurrentPlayer)
+        if (_isCurrentPlayer && playerState == PlayerState.Rolling)
         {
-            switch (playerState)
-            {
-                case PlayerState.Rolling:
-                    HandlePlayerRolling();
-                    break;
-
-            }
+            HandlePlayerRolling();
         }
     }
-    
+
     IEnumerator StartRolling()
     {
         _currentYaw = 0;
@@ -112,6 +96,7 @@ public class SushiGolfHitControl : MonoBehaviour
             isFirstTurn = false;
             rb.useGravity = true;
         }
+
         playerState = PlayerState.Rolling;
         Vector3 hitDirection = transform.forward;
         rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
@@ -125,50 +110,29 @@ public class SushiGolfHitControl : MonoBehaviour
             oneShotSource.pitch = Random.Range(0.95f, 1.05f);
             oneShotSource.PlayOneShot(hitSounds[index]);
         }
+
         yield return new WaitForSeconds(0.5f);
         _canCheckStopRolling = true;
-       
-    }
-    
-    //On the first turn our ball is static
-    IEnumerator HandleFirstTurnKick()
-    {
-        rb.isKinematic = false;
-        yield return new WaitForFixedUpdate(); // Wait until physics update
-        rb.AddForce(Vector3.forward * 10f, ForceMode.Impulse);
     }
 
     private void HandlePlayerRolling()
     {
-        //we need to detect when it stops rolling
-        //maybe with velocity is near zero?
         if (rb.linearVelocity.sqrMagnitude < 0.1f && _canCheckStopRolling)
         {
             hasHit = false;
             playerState = PlayerState.None;
-            //tell game manager is time to change player
             GameManager.Instance.ChangePlayer();
             _canCheckStopRolling = false;
         }
-        
     }
 
     private void HandlePlayerAiming()
     {
-        
         float rotationInput = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
         _currentYaw += rotationInput;
-        // Apply to ball player
         transform.rotation = Quaternion.Euler(0f, _currentYaw, 0f);
 
-        // Now lets point the stupid arrow
-        //Vector3 lookDirection = Quaternion.Euler(0f, _currentYaw, 0f) * Vector3.forward;
-        //directionArrow.transform.rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
-        
-        //float rotation = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
-        //transform.Rotate(Vector3.up, rotation, Space.World);
-
-        if (Input.GetKeyDown(KeyCode.Space) )
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             UIManager.Instance?.PositionPowerBar();
             currentPower = _minPower;
@@ -176,7 +140,6 @@ public class SushiGolfHitControl : MonoBehaviour
 
             playerState = PlayerState.Charging;
             UIManager.Instance?.ShowDirectionArrow(false);
-
         }
     }
 
@@ -200,14 +163,13 @@ public class SushiGolfHitControl : MonoBehaviour
                 powerIncreasing = true;
             }
         }
-                
+
         UIManager.Instance?.UpdatePowerBar(currentPower);
 
         if (Input.GetKeyUp(KeyCode.Space))
         {
             StartCoroutine(StartRolling());
         }
-        
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -217,22 +179,29 @@ public class SushiGolfHitControl : MonoBehaviour
             Rigidbody ingredientRb = collision.rigidbody;
             Collider ingredientCol = collision.collider;
 
+            // Freeze Rigidbody and remove physical collider interaction
             if (ingredientRb != null)
                 ingredientRb.isKinematic = true;
 
             if (ingredientCol != null)
-                ingredientCol.enabled = false;
+                ingredientCol.enabled = false; // Still works if it's just a trigger
 
+            // Disable FloatingIngredient bobbing/rotating
+            FloatingIngredient floatScript = collision.gameObject.GetComponent<FloatingIngredient>();
+            if (floatScript != null)
+            {
+                floatScript.enabled = false;
+            }
+
+            // Parent the ingredient to the sushi ball and slightly randomize position
             collision.transform.SetParent(transform);
-
             ContactPoint contact = collision.contacts[0];
             Vector3 localPoint = transform.InverseTransformPoint(contact.point);
             collision.transform.localPosition = localPoint;
-
             collision.transform.localRotation = Random.rotation;
             collision.transform.localPosition += Random.insideUnitSphere * 0.1f;
 
-            // 🔊 Play random pickup sound
+            // 🔊 Play pickup sound
             if (pickupSounds.Length > 0)
             {
                 int index = Random.Range(0, pickupSounds.Length);
@@ -240,7 +209,7 @@ public class SushiGolfHitControl : MonoBehaviour
                 oneShotSource.PlayOneShot(pickupSounds[index]);
             }
 
-            // 💨 Play random fart sound if it's poop
+            // 💨 Fart if poop
             if (collision.gameObject.name.Contains("Poop") && fartSounds.Length > 0)
             {
                 int index = Random.Range(0, fartSounds.Length);
@@ -250,7 +219,6 @@ public class SushiGolfHitControl : MonoBehaviour
         }
     }
 
-    //Setu from game manager
     public void Setup(float minPower, float maxPower, float rotationSpeed, float powerChangeSpeed)
     {
         _minPower = minPower;
