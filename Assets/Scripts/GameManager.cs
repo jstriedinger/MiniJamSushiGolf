@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -32,13 +33,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Transform cameraPivot;
     [SerializeField] private SushiGolfHitControl[] players;
     public SushiGolfHitControl currentPlayerBall;
+    private int _currentPlayerIndex;
 
     private Vector3 _cameraPivotAngles;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        currentPlayerBall = players[0];
         _cameraPivotAngles = cameraPivot.eulerAngles;
     }
 
@@ -50,7 +51,6 @@ public class GameManager : MonoBehaviour
         {
             cameraPivot.position = Vector3.Lerp(cameraPivot.position, currentPlayerBall.transform.position, Time.deltaTime * 4);
 
-
             if (currentPlayerBall.playerState == PlayerState.Aiming)
             {
                 _cameraPivotAngles = currentPlayerBall.transform.eulerAngles;
@@ -61,8 +61,27 @@ public class GameManager : MonoBehaviour
     }
 
 
-    void ChangePlayer()
+    public void ChangePlayer()
     {
+        //calcualte points
+        
+        //change player
+        currentPlayerBall.ToggleIsCurrentPlayer(false);
+        _currentPlayerIndex++;
+        if(_currentPlayerIndex >= players.Length)
+        {
+            _currentPlayerIndex = 0; 
+        }
+        currentPlayerBall = null;
+        //Move out camera pivot
+        Sequence seq = DOTween.Sequence();
+        seq.Append(cameraPivot.DOMove(players[_currentPlayerIndex].transform.position, 1f));
+        seq.Join( cameraPivot.DORotate(new Vector3(15f, players[_currentPlayerIndex].transform.eulerAngles.y, 0f), 1f))
+        .OnComplete(() =>
+        {
+            currentPlayerBall = players[_currentPlayerIndex];
+            currentPlayerBall.ToggleIsCurrentPlayer(true);
+        });
         
     }
 
@@ -98,5 +117,6 @@ public class GameManager : MonoBehaviour
         // Set the first player as the current player
         currentPlayerBall = players[0];
         currentPlayerBall.ToggleIsCurrentPlayer(true);
+        _currentPlayerIndex = 0;
     }
 }
