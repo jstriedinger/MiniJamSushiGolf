@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -6,14 +7,16 @@ using Random = UnityEngine.Random;
 
 public enum PlayerState
 {
+    None,
     Aiming,
+    Charging,
     Rolling
     
 }
 public class SushiGolfHitControl : MonoBehaviour
 {
     private bool _isCurrentPlayer = false;
-    public PlayerState playerState = PlayerState.Aiming;
+    public PlayerState playerState = PlayerState.Charging;
     [Header("Aiming & Hit Settings")]
     private float _minPower, _maxPower, _rotationSpeed, _powerChangeSpeed;
     public Rigidbody rb;
@@ -35,6 +38,7 @@ public class SushiGolfHitControl : MonoBehaviour
     private float currentPower = 0f;
     private bool powerIncreasing = true;
     private bool hasHit = false;
+    private bool _canCheckStopRolling = false;
 
     private void Start()
     {
@@ -69,76 +73,126 @@ public class SushiGolfHitControl : MonoBehaviour
         //This player is the active one
         if (_isCurrentPlayer)
         {
-            float rotation = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
-            transform.Rotate(Vector3.up, rotation);
-
-            if (Input.GetKeyDown(KeyCode.Space) && !isCharging)
+            switch (playerState)
             {
-                UIManager.Instance?.PositionPowerBar();
-                isCharging = true;
-                currentPower = _minPower;
-                powerIncreasing = true;
-
-                playerState = PlayerState.Aiming;
-
+                case PlayerState.Aiming:
+                    HandlePlayerAiming();
+                    break;
+                case PlayerState.Charging:
+                    HandlePlayerCharging();
+                    break;
+              
             }
             
-            if (isCharging)
-            {
-                playerState = PlayerState.Aiming;
-                if (powerIncreasing)
-                {
-                    currentPower += _powerChangeSpeed * Time.deltaTime;
-                    if (currentPower >= _maxPower)
-                    {
-                        currentPower = _maxPower;
-                        powerIncreasing = false;
-                    }
-                }
-                else
-                {
-                    currentPower -= _powerChangeSpeed * Time.deltaTime;
-                    if (currentPower <= _minPower)
-                    {
-                        currentPower = _minPower;
-                        powerIncreasing = true;
-                    }
-                }
-                
-                UIManager.Instance?.UpdatePowerBar(currentPower);
-
-                if (Input.GetKeyUp(KeyCode.Space))
-                {
-                    playerState = PlayerState.Rolling;
-                    Vector3 hitDirection = transform.forward;
-                    rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
-
-                    isCharging = false;
-                    hasHit = true;
-                    
-                    UIManager.Instance?.TogglePowerBar(false);
-                        
-
-                    if (directionArrow != null)
-                        directionArrow.SetActive(false);
-
-                    if (hitSounds.Length > 0)
-                    {
-                        int index = Random.Range(0, hitSounds.Length);
-                        oneShotSource.pitch = Random.Range(0.95f, 1.05f);
-                        oneShotSource.PlayOneShot(hitSounds[index]);
-                    }
-                }
-            }
-
             if (directionArrow != null)
             {
                 directionArrow.transform.localPosition = new Vector3(0, 0.5f, 1f);
                 directionArrow.transform.localRotation = Quaternion.identity;
             }
+            
         }
 
 
+    }
+
+    private void FixedUpdate()
+    {
+        if (_isCurrentPlayer)
+        {
+            switch (playerState)
+            {
+                case PlayerState.Rolling:
+                    HandlePlayerRolling();
+                    break;
+
+            }
+        }
+    }
+    
+    IEnumerator StartRolling()
+    {
+        playerState = PlayerState.Rolling;
+        Vector3 hitDirection = transform.forward;
+        rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
+
+        hasHit = true;
+        UIManager.Instance?.TogglePowerBar(false);
+
+        if (directionArrow != null)
+            directionArrow.SetActive(false);
+
+        if (hitSounds.Length > 0)
+        {
+            int index = Random.Range(0, hitSounds.Length);
+            oneShotSource.pitch = Random.Range(0.95f, 1.05f);
+            oneShotSource.PlayOneShot(hitSounds[index]);
+        }
+        yield return new WaitForSeconds(0.5f);
+        _canCheckStopRolling = true;
+       
+    }
+
+    private void HandlePlayerRolling()
+    {
+        //we need to detect when it stops rolling
+        //maybe with velocity is near zero?
+        if (rb.linearVelocity.sqrMagnitude < 0.1f && _canCheckStopRolling)
+        {
+            hasHit = false;
+            playerState = PlayerState.None;
+            //tell game manager is time to change player
+            GameManager.Instance.ChangePlayer();
+            _canCheckStopRolling = false;
+        }
+        
+    }
+
+    private void HandlePlayerAiming()
+    {
+        float rotation = Input.GetAxis("Horizontal") * _rotationSpeed * Time.deltaTime;
+        transform.Rotate(Vector3.up, rotation);
+
+        if (Input.GetKeyDown(KeyCode.Space) )
+        {
+            UIManager.Instance?.PositionPowerBar();
+            currentPower = _minPower;
+            powerIncreasing = true;
+
+            playerState = PlayerState.Charging;
+
+        }
+    }
+
+    private void HandlePlayerCharging()
+    {
+        if (powerIncreasing)
+        {
+            currentPower += _powerChangeSpeed * Time.deltaTime;
+            if (currentPower >= _maxPower)
+            {
+                currentPower = _maxPower;
+                powerIncreasing = false;
+            }
+        }
+        else
+        {
+            currentPower -= _powerChangeSpeed * Time.deltaTime;
+            if (currentPower <= _minPower)
+            {
+                currentPower = _minPower;
+                powerIncreasing = true;
+            }
+        }
+                
+        UIManager.Instance?.UpdatePowerBar(currentPower);
+
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            
+
+            StartCoroutine(StartRolling());
+        }
+        
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -193,5 +247,6 @@ public class SushiGolfHitControl : MonoBehaviour
     public void ToggleIsCurrentPlayer(bool isCurrentPlayer)
     {
         _isCurrentPlayer = isCurrentPlayer;
+        playerState = PlayerState.Aiming;
     }
 }
