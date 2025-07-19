@@ -3,8 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
+
+public enum PlayerState
+{
+    Aiming,
+    Rolling
+    
+}
 public class SushiGolfHitControl : MonoBehaviour
 {
+    public PlayerState playerState = PlayerState.Aiming;
     [Header("Aiming & Hit Settings")]
     public float rotationSpeed = 100f;
     public float minPower = 4f;
@@ -76,6 +84,8 @@ public class SushiGolfHitControl : MonoBehaviour
             currentPower = minPower;
             powerIncreasing = true;
 
+            playerState = PlayerState.Aiming;
+
             Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(50, 1, 0);
             _powerBarRectTransform.position = screenPos;
 
@@ -90,6 +100,7 @@ public class SushiGolfHitControl : MonoBehaviour
 
         if (isCharging)
         {
+            playerState = PlayerState.Aiming;
             if (powerIncreasing)
             {
                 currentPower += powerChangeSpeed * Time.deltaTime;
@@ -118,6 +129,7 @@ public class SushiGolfHitControl : MonoBehaviour
 
             if (Input.GetKeyUp(KeyCode.Space))
             {
+                playerState = PlayerState.Rolling;
                 Vector3 hitDirection = transform.forward;
                 rb.AddForce(hitDirection * currentPower, ForceMode.Impulse);
 
