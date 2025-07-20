@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6092146087549542808}
   - component: {fileID: 4123224794822556700}
   - component: {fileID: 3994180524610795761}
+  - component: {fileID: -5241286415361877426}
   m_Layer: 0
   m_Name: RiceBall
   m_TagString: Untagged
@@ -178,5 +179,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   freshnessAmount: 100
+  maxFreshness: 0
   freshnessDecreaseMultiplier: -1
   isDecreasingFreshness: 0
+--- !u!114 &-5241286415361877426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5714589198575717757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a45eac4d1e0e490caa994e84641df770, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

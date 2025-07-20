@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -5593732893049302346, guid: fd41fe511c6892740b4bed477be2e54f, type: 3}
+      propertyPath: ingredientName
+      value: Fish
+      objectReference: {fileID: 0}
     - target: {fileID: 384957436372875925, guid: fd41fe511c6892740b4bed477be2e54f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

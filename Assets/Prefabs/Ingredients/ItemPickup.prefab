@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1794776135736732344}
   - component: {fileID: 6711938937013940997}
   - component: {fileID: 359471024944699571}
+  - component: {fileID: -5593732893049302346}
   m_Layer: 0
   m_Name: ItemPickup
   m_TagString: Ingredient
@@ -125,3 +126,17 @@ MonoBehaviour:
   rotationSpeed: 60
   bobAmplitude: 0.15
   bobFrequency: 1
+--- !u!114 &-5593732893049302346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5813875789145061575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a22410850db64e6d8898ee0ef77d7f34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ingredientName: 
+  pickedup: 0
