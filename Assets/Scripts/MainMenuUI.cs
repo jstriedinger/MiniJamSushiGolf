@@ -3,29 +3,45 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuUI : MonoBehaviour
 {
-    public void LoadMainMenu()
+    public AudioClip buttonClickSFX;
+    public float sceneLoadDelay = 1.0f;
+
+    private AudioSource audioSource;
+
+    private void Awake()
     {
-        SceneManager.LoadScene("MainMenu");
-    }
-    public void OnStartGame()
-    {
-        SceneManager.LoadScene("TestScene");
-        // This will be expanded in later steps
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        audioSource.playOnAwake = false;
     }
 
-    public void OnRules()
+    private void PlayClickSound()
     {
-        SceneManager.LoadScene("HowToPlay");
+        if (audioSource != null && buttonClickSFX != null)
+        {
+            audioSource.PlayOneShot(buttonClickSFX);
+        }
     }
 
-    public void OnCredits()
-    {
-        SceneManager.LoadScene("Credits");
-    }
-
+    public void LoadMainMenu() => StartCoroutine(LoadSceneWithSFX("MainMenu"));
+    public void OnPlayerSelect() => StartCoroutine(LoadSceneWithSFX("PlayerSelect"));
+    public void OnStartGame() => StartCoroutine(LoadSceneWithSFX("TestScene"));
+    public void OnRules() => StartCoroutine(LoadSceneWithSFX("HowToPlay"));
+    public void OnCredits() => StartCoroutine(LoadSceneWithSFX("Credits"));
     public void OnQuit()
     {
-        Application.Quit();
+        PlayClickSound();
         Debug.Log("Quit Game clicked.");
+        Application.Quit();
+    }
+
+    private System.Collections.IEnumerator LoadSceneWithSFX(string sceneName)
+    {
+        PlayClickSound();
+        yield return new WaitForSeconds(sceneLoadDelay);
+        SceneManager.LoadScene(sceneName);
     }
 }
