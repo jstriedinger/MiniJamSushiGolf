@@ -39,6 +39,9 @@ public class SushiGolfHitControl : MonoBehaviour
     private float _currentYaw = 0f;
     public bool hasFinished = false;
 
+    private float _stopTime = 1.0f;
+    private float _timeBelowThreshold = 0f;
+
     private void Start()
     {
         oneShotSource = gameObject.AddComponent<AudioSource>();
@@ -119,13 +122,23 @@ public class SushiGolfHitControl : MonoBehaviour
 
     private void HandlePlayerRolling()
     {
-        if (rb.linearVelocity.sqrMagnitude < 0.1f && _canCheckStopRolling)
+        if (rb.linearVelocity.sqrMagnitude  < 0.5f && _canCheckStopRolling)
         {
-            hasHit = false;
-            playerState = PlayerState.None;
-            GameManager.Instance.ChangePlayer();
-            _canCheckStopRolling = false;
+            _timeBelowThreshold += Time.deltaTime;
+            if (_timeBelowThreshold >= _stopTime)
+            {
+                hasHit = false;
+                playerState = PlayerState.None;
+                Debug.Log("Trying to change player");
+                _canCheckStopRolling = false; // call this only once
+                GameManager.Instance.TryToChangePlayer();
+            }
         }
+        else
+        {
+            _timeBelowThreshold = 0f; // reset if it speeds up again
+        }
+       
     }
 
     private void HandlePlayerAiming()
@@ -198,15 +211,10 @@ public class SushiGolfHitControl : MonoBehaviour
             float safeOffset = 0.025f; // small buffer to place it outside
             Vector3 directionOut = (other.transform.position - transform.position).normalized;
             Vector3 contactPoint = transform.position + directionOut * (sphereRadius + safeOffset);
-            //Vector3 directionOut = (contactPoint - transform.position).normalized;
-            //Vector3 contactPoint = GetComponent<Collider>().ClosestPoint(other.transform.position);
             other.transform.position = contactPoint;
             other.transform.rotation = Quaternion.LookRotation(directionOut);
             
             other.transform.SetParent(transform);
-            //other.transform.localPosition = localPoint;
-            //other.transform.localRotation = Random.rotation;
-            //other.transform.localPosition += Random.insideUnitSphere * 0.1f;
 
             // 🔊 Play pickup sound
             if (pickupSounds.Length > 0)

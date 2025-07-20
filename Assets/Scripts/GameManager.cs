@@ -37,13 +37,12 @@ public class GameManager : MonoBehaviour
     [Header("Gameover management")]
     
     
-    
+    [Header("Characters & camera")]
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private Terrain arena;
     [SerializeField] private Transform cameraPivot;
-    [SerializeField] private SushiGolfHitControl[] players;
+    private SushiGolfHitControl[] _players;
     public SushiGolfHitControl currentPlayerBall;
-    private int _currentPlayerIndex =0;
+    private int _currentPlayerIndex =-1;
 
     private Vector3 _cameraPivotAngles;
 
@@ -74,26 +73,33 @@ public class GameManager : MonoBehaviour
 
     public void ChangePlayer()
     {
+        Debug.Log("Changing player");
         //calcualte points
         
         //change player
         if (currentPlayerBall != null)
         {
             currentPlayerBall.ToggleIsCurrentPlayer(false);
-            _currentPlayerIndex++;
         }
-        if(_currentPlayerIndex >= players.Length)
+
+        do
         {
-            _currentPlayerIndex = 0; 
-        }
+            _currentPlayerIndex++;
+            if(_currentPlayerIndex >= _players.Length)
+            {
+                _currentPlayerIndex = 0; 
+            }
+            
+        } while (_players[_currentPlayerIndex].hasFinished);
+        //we must change until we find the nxt player that has not finished
         currentPlayerBall = null;
         //Move out camera pivot
         Sequence seq = DOTween.Sequence();
-        seq.Append(cameraPivot.DOMove(players[_currentPlayerIndex].transform.position, 1f));
-        seq.Join( cameraPivot.DORotate(new Vector3(15f, players[_currentPlayerIndex].transform.eulerAngles.y, 0f), 1f))
+        seq.Append(cameraPivot.DOMove(_players[_currentPlayerIndex].transform.position, 1f));
+        seq.Join( cameraPivot.DORotate(new Vector3(15f, _players[_currentPlayerIndex].transform.eulerAngles.y, 0f), 1f))
         .OnComplete(() =>
         {
-            currentPlayerBall = players[_currentPlayerIndex];
+            currentPlayerBall = _players[_currentPlayerIndex];
             currentPlayerBall.ToggleIsCurrentPlayer(true);
             UIManager.Instance?.ShowDirectionArrow(true);
         });
@@ -106,11 +112,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Starting game with " + numPlayers + " players.");
         
         // Initialize players array or any other game setup logic here
-        players = new SushiGolfHitControl[numPlayers];
-        TerrainData terrainData = arena.terrainData;
-        Vector3 terrainPosition = arena.transform.position;
-        float terrainWidth = terrainData.size.x;
-        float terrainLength = terrainData.size.z;
+        _players = new SushiGolfHitControl[numPlayers];
         
         // Create players
         for (int i = 0; i < numPlayers; i++)
@@ -121,7 +123,7 @@ public class GameManager : MonoBehaviour
             rb.useGravity = false;
             SushiGolfHitControl newPlayerSushiControl = newPlayer.GetComponent<SushiGolfHitControl>();
             newPlayerSushiControl.Setup(minPower, maxPower, rotationSpeed, powerChangeSpeed);
-            players[i] = newPlayerSushiControl;
+            _players[i] = newPlayerSushiControl;
         }
 
         // Set the first player as the current player
@@ -150,8 +152,50 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void CheckGameOver()
+    //Trigerred when all players have finished the hole
+    public void HandleGameOver()
     {
-        
+        Debug.Log("Gameover");
+        //we gotta put the camera somewhere, for not just zero
+        currentPlayerBall.ToggleIsCurrentPlayer(false);
+        currentPlayerBall = null;
+        _currentPlayerIndex = -1;
+        Sequence seq = DOTween.Sequence();
+        seq.Append(cameraPivot.DOMove(new Vector3(10,10,10), 5f));
+        seq.Join( cameraPivot.DORotate(new Vector3(45,30,0), 5f))
+            .OnComplete(() =>
+            {
+                //Shwo game over UI
+            });
+    }
+
+    public void OnBallHitHole(GameObject otherGameObject)
+    {
+        SushiGolfHitControl hitPlayer = otherGameObject.GetComponent<SushiGolfHitControl>();
+        //remove this player from the game
+        hitPlayer.hasFinished = true;
+        Rigidbody rb = otherGameObject.GetComponent<Rigidbody>();
+        rb.linearVelocity = Vector3.zero;
+        rb.isKinematic = true;
+        //lets check if all players have finished
+
+    }
+
+    public void TryToChangePlayer()
+    {
+        bool allFinished = true;
+        foreach (SushiGolfHitControl player in _players)
+        {
+            if (!player.hasFinished)
+            {
+                allFinished = false;
+                break;
+            }
+        }
+
+        if (allFinished)
+            HandleGameOver();
+        else
+            ChangePlayer();
     }
 }
