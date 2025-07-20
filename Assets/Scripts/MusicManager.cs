@@ -1,86 +1,77 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
 public class MusicManager : MonoBehaviour
 {
+    public static MusicManager Instance;
+
     public AudioClip menuMusic;
     public AudioClip gameplayMusic;
-    public float fadeDuration = 2f;
 
-    private AudioSource sourceA;
-    private AudioSource sourceB;
-    private AudioSource currentSource;
-    private string currentSceneName = "";
+    [Range(0f, 1f)]
+    public float musicVolume = 0.7f; // 👈 Exposed in Inspector
+
+    private AudioSource audioSource;
 
     private void Awake()
     {
-        // Singleton pattern
-        if (FindObjectsOfType<MusicManager>().Length > 1)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
+        Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Add two AudioSources
-        sourceA = gameObject.AddComponent<AudioSource>();
-        sourceB = gameObject.AddComponent<AudioSource>();
+        audioSource = gameObject.GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
 
-        sourceA.loop = true;
-        sourceB.loop = true;
-
-        sourceA.playOnAwake = false;
-        sourceB.playOnAwake = false;
-
-        currentSource = sourceA;
+        audioSource.loop = true;
+        audioSource.playOnAwake = false;
+        audioSource.volume = musicVolume; // 👈 Use editable volume
+        audioSource.clip = menuMusic;
+        audioSource.Play();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    private void Start()
-    {
-        currentSceneName = SceneManager.GetActiveScene().name;
-        PlayMusicForScene(currentSceneName);
-    }
-
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name != currentSceneName)
+        if (scene.name == "TestScene") // Replace with your gameplay scene name
         {
-            currentSceneName = scene.name;
-            PlayMusicForScene(currentSceneName);
+            StartCoroutine(CrossfadeTo(gameplayMusic));
         }
-    }
-
-    private void PlayMusicForScene(string sceneName)
-    {
-        AudioClip targetClip = (sceneName == "TestScene") ? gameplayMusic : menuMusic;
-        if (currentSource.clip == targetClip) return;
-
-        StartCoroutine(CrossfadeTo(targetClip));
+        else
+        {
+            StartCoroutine(CrossfadeTo(menuMusic));
+        }
     }
 
     private IEnumerator CrossfadeTo(AudioClip newClip)
     {
-        AudioSource nextSource = (currentSource == sourceA) ? sourceB : sourceA;
-        nextSource.clip = newClip;
-        nextSource.volume = 0f;
-        nextSource.Play();
+        float fadeDuration = 1f;
+        float startVolume = musicVolume;
 
-        float time = 0f;
-        while (time < fadeDuration)
+        // Fade out
+        for (float t = 0f; t < fadeDuration; t += Time.deltaTime)
         {
-            time += Time.deltaTime;
-            float t = time / fadeDuration;
-            currentSource.volume = Mathf.Lerp(1f, 0f, t);
-            nextSource.volume = Mathf.Lerp(0f, 1f, t);
+            audioSource.volume = Mathf.Lerp(startVolume, 0f, t / fadeDuration);
             yield return null;
         }
 
-        currentSource.Stop();
-        currentSource.volume = 1f; // reset in case reused
-        currentSource = nextSource;
+        audioSource.clip = newClip;
+        audioSource.Play();
+
+        // Fade in
+        for (float t = 0f; t < fadeDuration; t += Time.deltaTime)
+        {
+            audioSource.volume = Mathf.Lerp(0f, musicVolume, t / fadeDuration);
+            yield return null;
+        }
+
+        audioSource.volume = musicVolume;
     }
 }
