@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,12 +14,12 @@ public class UIManager : MonoBehaviour
     private int powerBarHeight;
     public Image fillBar;
     private RectTransform _fillBarRectTransform;
-    
-    
-    [SerializeField] private GameObject gameSelectScreen;
-    [SerializeField] private TMP_Dropdown numPlayersDropdown;
-    private int _numPlayers;
     public static UIManager Instance { get; private set; }
+
+    private void Start()
+    {
+        StartCoroutine(StartGame());
+    }
 
     private void Awake() 
     { 
@@ -34,14 +35,6 @@ public class UIManager : MonoBehaviour
         } 
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        numPlayersDropdown.onValueChanged.AddListener(OnNumPlayersChanged);
-    }
-    
-    private void OnNumPlayersChanged(int value)
-    {
-    }
 
     // Update is called once per frame
     void Update()
@@ -69,11 +62,11 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void StartGame()
+    IEnumerator StartGame()
     {
-        Destroy(gameSelectScreen);
+        yield return new WaitForSeconds(0.5f);
         //because index starts at 0
-        GameManager.Instance?.StartGame(numPlayersDropdown.value + 1);
+        GameManager.Instance?.StartGame();
         
         _fillBarRectTransform = fillBar.GetComponent<RectTransform>();
         _powerBarRectTransform = powerBar.GetComponent<RectTransform>();

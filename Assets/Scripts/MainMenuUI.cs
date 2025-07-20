@@ -28,7 +28,12 @@ public class MainMenuUI : MonoBehaviour
 
     public void LoadMainMenu() => StartCoroutine(LoadSceneWithSFX("MainMenu"));
     public void OnPlayerSelect() => StartCoroutine(LoadSceneWithSFX("PlayerSelect"));
-    public void OnStartGame() => StartCoroutine(LoadSceneWithSFX("TestScene"));
+    public void OnStartGame(int x)
+    {
+        GameSettings.NumPlayers = x;
+        StartCoroutine(LoadSceneWithSFX("TestScene"));
+    }
+
     public void OnRules() => StartCoroutine(LoadSceneWithSFX("HowToPlay"));
     public void OnCredits() => StartCoroutine(LoadSceneWithSFX("Credits"));
     public void OnQuit()
@@ -42,6 +47,11 @@ public class MainMenuUI : MonoBehaviour
     {
         PlayClickSound();
         yield return new WaitForSeconds(sceneLoadDelay);
+        if(sceneName == "TestScene")
+        {
+            // Reset any game state if necessary
+            GameSettings.NumPlayers = 2;
+        }
         SceneManager.LoadScene(sceneName);
     }
 }

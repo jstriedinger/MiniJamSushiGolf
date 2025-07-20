@@ -106,16 +106,14 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void StartGame(int numPlayers)
+    public void StartGame()
     {
-        // Set the number of players based on the value passed from the UI
-        Debug.Log("Starting game with " + numPlayers + " players.");
         
         // Initialize players array or any other game setup logic here
-        _players = new SushiGolfHitControl[numPlayers];
+        _players = new SushiGolfHitControl[GameSettings.NumPlayers];
         
         // Create players
-        for (int i = 0; i < numPlayers; i++)
+        for (int i = 0; i < GameSettings.NumPlayers; i++)
         {
             GameObject newPlayer = Instantiate(playerPrefab, initialPlayerPositions[i].position,initialPlayerPositions[i].rotation);
             //make our ball not move
