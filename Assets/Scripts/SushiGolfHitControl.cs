@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using PlayerProperty;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -283,6 +284,7 @@ public class SushiGolfHitControl : MonoBehaviour
     public void ToggleIsCurrentPlayer(bool isCurrentPlayer)
     {
         _isCurrentPlayer = isCurrentPlayer;
+        GetComponent<Freshness>().ModifyFreshness(isCurrentPlayer);
         playerState = PlayerState.Aiming;
         _currentYaw = transform.eulerAngles.y;
         rb.linearVelocity = Vector3.zero;
