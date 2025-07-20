@@ -102,6 +102,7 @@ public class GameManager : MonoBehaviour
             currentPlayerBall = _players[_currentPlayerIndex];
             currentPlayerBall.ToggleIsCurrentPlayer(true);
             UIManager.Instance?.ShowDirectionArrow(true);
+            UIManager.Instance?.UpdatePlayerName(currentPlayerBall.name);
         });
         
     }
@@ -116,6 +117,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < GameSettings.NumPlayers; i++)
         {
             GameObject newPlayer = Instantiate(playerPrefab, initialPlayerPositions[i].position,initialPlayerPositions[i].rotation);
+            newPlayer.name = "P" +(i+1);
             //make our ball not move
             Rigidbody rb = newPlayer.GetComponent<Rigidbody>();
             rb.useGravity = false;

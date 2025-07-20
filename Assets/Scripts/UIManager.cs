@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    [SerializeField] private TMP_Text playerName;
     [SerializeField] private GameObject directionArrow;
     [Header("Power bar")]
     public GameObject powerBar;
@@ -59,6 +60,14 @@ public class UIManager : MonoBehaviour
         if (directionArrow != null)
         {
             directionArrow.SetActive(show);
+        }
+    }
+    
+    public void UpdatePlayerName(string name)
+    {
+        if (playerName != null)
+        {
+            playerName.text = name;
         }
     }
 
