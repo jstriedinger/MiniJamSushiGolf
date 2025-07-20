@@ -172,6 +172,58 @@ public class SushiGolfHitControl : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Ingredient"))
+        {
+            Rigidbody ingredientRb = other.gameObject.GetComponent<Rigidbody>();
+
+            // Freeze Rigidbody and remove physical collider interaction
+            if (ingredientRb != null)
+                ingredientRb.isKinematic = true;
+
+            other.enabled = false; // Still works if it's just a trigger
+
+            // Disable FloatingIngredient bobbing/rotating
+            FloatingIngredient floatScript = other.gameObject.GetComponent<FloatingIngredient>();
+            if (floatScript != null)
+            {
+                floatScript.enabled = false;
+            }
+
+            // Parent the ingredient to the sushi ball and slightly randomize position
+            float sphereRadius = GetComponent<SphereCollider>().radius * transform.lossyScale.x;
+            float safeOffset = 0.025f; // small buffer to place it outside
+            Vector3 directionOut = (other.transform.position - transform.position).normalized;
+            Vector3 contactPoint = transform.position + directionOut * (sphereRadius + safeOffset);
+            //Vector3 directionOut = (contactPoint - transform.position).normalized;
+            //Vector3 contactPoint = GetComponent<Collider>().ClosestPoint(other.transform.position);
+            other.transform.position = contactPoint;
+            other.transform.rotation = Quaternion.LookRotation(directionOut);
+            
+            other.transform.SetParent(transform);
+            //other.transform.localPosition = localPoint;
+            //other.transform.localRotation = Random.rotation;
+            //other.transform.localPosition += Random.insideUnitSphere * 0.1f;
+
+            // 🔊 Play pickup sound
+            if (pickupSounds.Length > 0)
+            {
+                int index = Random.Range(0, pickupSounds.Length);
+                oneShotSource.pitch = Random.Range(0.95f, 1.05f);
+                oneShotSource.PlayOneShot(pickupSounds[index]);
+            }
+
+            // 💨 Fart if poop
+            if (other.gameObject.name.Contains("Poop") && fartSounds.Length > 0)
+            {
+                int index = Random.Range(0, fartSounds.Length);
+                oneShotSource.pitch = Random.Range(0.9f, 1.1f);
+                oneShotSource.PlayOneShot(fartSounds[index]);
+            }
+        }
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ingredient"))
