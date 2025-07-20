@@ -1,3 +1,4 @@
+using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -26,6 +27,16 @@ public class GameManager : MonoBehaviour
     public float powerChangeSpeed = 8f;
     [SerializeField] private Transform[] initialPlayerPositions;
     
+    [Header("Items")]
+    [SerializeField] private GameObject[] itemsToSpawn;
+    private GameObject[] _spawnedItems;
+    [SerializeField] private GameObject itemsPositionsObj;
+    private Transform[] _itemsPositions;
+    
+    
+    [Header("Gameover management")]
+    
+    
     
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private Terrain arena;
@@ -40,6 +51,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         _cameraPivotAngles = cameraPivot.eulerAngles;
+        
     }
 
     // Update is called once per frame
@@ -114,5 +126,27 @@ public class GameManager : MonoBehaviour
 
         // Set the first player as the current player
         ChangePlayer();
+        
+        //initialize items positions
+        _itemsPositions = itemsPositionsObj.transform.Cast<Transform>()
+            .OrderBy(t => UnityEngine.Random.value)
+            .ToArray();
+        //now lets go throguh them and put our items
+        _spawnedItems = new GameObject[itemsToSpawn.Length];
+        for (int i = 0; i < _itemsPositions.Length; i++)
+        {
+            if (i < itemsToSpawn.Length)
+            {
+                Vector3 itemPosition = _itemsPositions[i].position;
+                Ray ray = new Ray(_itemsPositions[i].position, Vector3.down);
+
+                if (Physics.Raycast(ray, out RaycastHit hit, 50f))
+                {
+                    itemPosition = hit.point + Vector3.up * 1f;
+                }
+                GameObject item = Instantiate(itemsToSpawn[i],itemPosition ,Quaternion.identity);
+                _spawnedItems[i] = item;
+            }
+        }
     }
 }
