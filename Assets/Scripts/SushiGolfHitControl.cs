@@ -36,6 +36,7 @@ public class SushiGolfHitControl : MonoBehaviour
     private bool _canCheckStopRolling = false;
     private bool isFirstTurn = true;
     private float _currentYaw = 0f;
+    public bool hasFinished = false;
 
     private void Start()
     {
