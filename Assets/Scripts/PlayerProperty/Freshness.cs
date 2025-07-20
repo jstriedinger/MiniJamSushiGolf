@@ -48,7 +48,7 @@ namespace PlayerProperty
         public void ModifyFreshness(bool isActivePlayer)
         {
             isDecreasingFreshness = isActivePlayer;
-            Debug.Log($"fresshness is  {isDecreasingFreshness}");
+            //Debug.Log($"fresshness is  {isDecreasingFreshness}");
         }
         
     }

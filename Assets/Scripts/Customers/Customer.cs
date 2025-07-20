@@ -28,7 +28,7 @@ namespace Customers
                 totalScore += GetIngredientScore(ingredient);
             }
 
-            Debug.Log(totalScore);
+            //Debug.Log(totalScore);
         }
 
         public float GetIngredientScore(Ingredient ingredient)
@@ -50,14 +50,14 @@ namespace Customers
                 scoreDict.Add(ingredientNames[i], ingredientScores[i]);
             }
 
-            Debug.Log(scoreDict.Count);
+            //Debug.Log(scoreDict.Count);
         }
         
         private void OnTriggerEnter(Collider other)
         {
             if (other.GetComponent<IngredientControl>())
             {
-                Debug.Log($"{customerName} is eating");
+                //Debug.Log($"{customerName} is eating");
             }
         }
 

@@ -20,7 +20,7 @@ namespace Ingredients
             if (!PickedUp)
             {
                 PickedUp = true;
-                Debug.Log($"{ingredientName} Picked Up");
+                //Debug.Log($"{ingredientName} Picked Up");
             }
         }
     }
