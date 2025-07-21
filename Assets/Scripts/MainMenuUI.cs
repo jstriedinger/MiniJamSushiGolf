@@ -47,11 +47,6 @@ public class MainMenuUI : MonoBehaviour
     {
         PlayClickSound();
         yield return new WaitForSeconds(sceneLoadDelay);
-        if(sceneName == "TestScene")
-        {
-            // Reset any game state if necessary
-            GameSettings.NumPlayers = 2;
-        }
         SceneManager.LoadScene(sceneName);
     }
 }
