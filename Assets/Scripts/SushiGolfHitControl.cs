@@ -2,6 +2,7 @@
 using System.Collections;
 using PlayerProperty;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -15,7 +16,7 @@ public enum PlayerState
 
 public class SushiGolfHitControl : MonoBehaviour
 {
-    private bool _isCurrentPlayer = false;
+    public bool isCurrentPlayer = false;
     public PlayerState playerState = PlayerState.Charging;
 
     [Header("Aiming & Hit Settings")]
@@ -71,7 +72,7 @@ public class SushiGolfHitControl : MonoBehaviour
             return;
         }
 
-        if (_isCurrentPlayer)
+        if (isCurrentPlayer)
         {
             switch (playerState)
             {
@@ -87,7 +88,7 @@ public class SushiGolfHitControl : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_isCurrentPlayer && playerState == PlayerState.Rolling)
+        if (isCurrentPlayer && playerState == PlayerState.Rolling)
         {
             HandlePlayerRolling();
         }
@@ -291,7 +292,7 @@ public class SushiGolfHitControl : MonoBehaviour
 
     public void ToggleIsCurrentPlayer(bool isCurrentPlayer)
     {
-        _isCurrentPlayer = isCurrentPlayer;
+        this.isCurrentPlayer = isCurrentPlayer;
         GetComponent<Freshness>().ModifyFreshness(isCurrentPlayer);
         playerState = PlayerState.Aiming;
         _currentYaw = transform.eulerAngles.y;

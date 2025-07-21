@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 namespace PlayerProperty
 {
@@ -8,10 +9,17 @@ namespace PlayerProperty
         public float freshnessDecreaseMultiplier;
 
         public bool isDecreasingFreshness = false;
+        
+        private SushiGolfHitControl _sushiGolfHitControl;
 
         private void Awake()
         {
             maxFreshness = freshnessAmount;
+        }
+
+        private void Start()
+        {
+            _sushiGolfHitControl = GetComponent<SushiGolfHitControl>();
         }
 
         private void Update()
@@ -21,12 +29,20 @@ namespace PlayerProperty
 
         private void CheckFreshness()
         {
-            if (isDecreasingFreshness)
+            if (_sushiGolfHitControl.isCurrentPlayer)
             {
-                if (freshnessAmount > 0)
+                if ( _sushiGolfHitControl.playerState == PlayerState.Aiming 
+                    || _sushiGolfHitControl.playerState == PlayerState.Charging
+                    || _sushiGolfHitControl.playerState == PlayerState.Rolling)
                 {
-                    freshnessAmount += Time.deltaTime * freshnessDecreaseMultiplier;
+                    if (freshnessAmount > 0)
+                    {
+                        freshnessAmount += Time.deltaTime * freshnessDecreaseMultiplier;
+                        UIManager.Instance?.UpdateFreshnessBar(freshnessAmount);
+                    }
+                    
                 }
+                
             }
         }
 

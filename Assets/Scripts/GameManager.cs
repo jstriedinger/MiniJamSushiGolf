@@ -102,7 +102,7 @@ public class GameManager : MonoBehaviour
             currentPlayerBall = _players[_currentPlayerIndex];
             currentPlayerBall.ToggleIsCurrentPlayer(true);
             UIManager.Instance?.ShowDirectionArrow(true);
-            UIManager.Instance?.UpdatePlayerName(currentPlayerBall.name);
+            UIManager.Instance?.UpdatePlayerUI(currentPlayerBall);
         });
         
     }

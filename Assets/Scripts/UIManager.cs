@@ -15,6 +15,12 @@ public class UIManager : MonoBehaviour
     private int powerBarHeight;
     public Image fillBar;
     private RectTransform _fillBarRectTransform;
+    
+    [Header("Freshness bar")]
+    private RectTransform _freshnessBarRectTransform;
+    private int _freshnessBarWidth;
+    public Image freshnessFillBar;
+    private RectTransform _freshnessFillBarRectTransform;
     public static UIManager Instance { get; private set; }
 
     private void Start()
@@ -63,12 +69,13 @@ public class UIManager : MonoBehaviour
         }
     }
     
-    public void UpdatePlayerName(string name)
+    public void UpdatePlayerUI(SushiGolfHitControl player)
     {
         if (playerName != null)
         {
-            playerName.text = name;
+            playerName.text = player.name;
         }
+        
     }
 
     IEnumerator StartGame()
@@ -80,6 +87,8 @@ public class UIManager : MonoBehaviour
         _fillBarRectTransform = fillBar.GetComponent<RectTransform>();
         _powerBarRectTransform = powerBar.GetComponent<RectTransform>();
         powerBarHeight = (int)_powerBarRectTransform.sizeDelta.y;
+
+        _freshnessFillBarRectTransform = freshnessFillBar.GetComponent<RectTransform>();
         
         _maxPower = GameManager.Instance.maxPower;
         _minPower = GameManager.Instance.minPower;
@@ -104,6 +113,14 @@ public class UIManager : MonoBehaviour
         Vector2 size = _fillBarRectTransform.sizeDelta;
         size.y = (currentPower * powerBarHeight) / _maxPower;
         _fillBarRectTransform.sizeDelta = size;
+    }
+    
+    public void UpdateFreshnessBar(float currentFreshness)
+    {
+        Vector2 size = _freshnessFillBarRectTransform.sizeDelta;
+        //hard coded the width of the bar but whatever
+        size.x = (currentFreshness * 800) / 100;
+        _freshnessFillBarRectTransform.sizeDelta = size;
     }
 
     public void TogglePowerBar(bool b)
