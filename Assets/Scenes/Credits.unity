@@ -704,6 +704,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MainMenuManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4035268820206726329, guid: 83549b1f3bca462469fbb17e39eb6502, type: 3}
+      propertyPath: buttonClickSFX
+      value: 
+      objectReference: {fileID: 8300000, guid: 2d569071134e1164fa5ac4a041965019, type: 3}
     - target: {fileID: 8374483923892967617, guid: 83549b1f3bca462469fbb17e39eb6502, type: 3}
       propertyPath: m_LocalPosition.x
       value: 487.0958

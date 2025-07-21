@@ -35,6 +35,7 @@ public class MainMenuUI : MonoBehaviour
     }
 
     public void OnRules() => StartCoroutine(LoadSceneWithSFX("HowToPlay"));
+    public void OnRules2() => StartCoroutine(LoadSceneWithSFX("HowToPlay2"));
     public void OnCredits() => StartCoroutine(LoadSceneWithSFX("Credits"));
     public void OnQuit()
     {
