@@ -13,22 +13,44 @@ namespace Customers
 
         public List<string> ingredientNames = new List<string>();
         public List<float> ingredientScores = new List<float>();
+
+        public bool ateAlready = false;
+        private float eatTimer = 0f;
+        private float eatCoolDown = 1f;
         private void Awake()
         {
             InitializeCustomer();
         }
-        
-        
+
+        private void Update()
+        {
+            if (ateAlready)
+            {
+                if (eatTimer < eatCoolDown)
+                {
+                    eatTimer += Time.deltaTime;
+                }
+                else if(eatTimer > eatCoolDown)
+                {
+                    eatTimer = 0f;
+                    ateAlready = false;
+                }
+            }
+        }
+
+
         public void OnEat(IngredientControl iC)
         {
             List<Ingredient> allEatenIngredients = iC.GetIngredients();
-            float totalScore = 0f;
+            
             foreach (Ingredient ingredient in allEatenIngredients)
             {
-                totalScore += GetIngredientScore(ingredient);
+                iC.GetComponent<ScoreControl>().AddToCount(ingredient.Name);
+                iC.GetComponent<ScoreControl>().AddToScoreCombo(ingredient.Name, GetIngredientScore(ingredient));
             }
-
-            //Debug.Log(totalScore);
+            iC.GetComponent<ScoreControl>().CalculateScore();
+            iC.GetComponent<ScoreControl>().freshness = iC.gameObject.GetComponent<Freshness>().freshnessAmount;
+            iC.GetComponent<ScoreControl>().customerName = customerName;
         }
 
         public float GetIngredientScore(Ingredient ingredient)
@@ -45,9 +67,13 @@ namespace Customers
 
         private void InitializeCustomer()
         {
-            for (int i = 0 ; i < ingredientNames.Count; i++)
+            for (int i = 0; i < ingredientNames.Count && i < ingredientScores.Count; i++)
             {
-                scoreDict.Add(ingredientNames[i], ingredientScores[i]);
+                string name = ingredientNames[i];
+                float score = ingredientScores[i];
+
+                // Add or update the dictionary
+                scoreDict[name] = score;
             }
 
             //Debug.Log(scoreDict.Count);
@@ -55,17 +81,12 @@ namespace Customers
         
         private void OnTriggerEnter(Collider other)
         {
-            if (other.GetComponent<IngredientControl>())
+            if (other.GetComponent<IngredientControl>() && !ateAlready)
             {
-                //Debug.Log($"{customerName} is eating");
-            }
-        }
 
-        private void OnCollisionEnter(Collision other)
-        {
-            if (other.gameObject.GetComponent<IngredientControl>())
-            {
+                Debug.Log("oneat");
                 OnEat(other.gameObject.GetComponent<IngredientControl>());
+                ateAlready = true;
             }
         }
     }

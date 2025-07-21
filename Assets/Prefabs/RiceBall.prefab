@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 4123224794822556700}
   - component: {fileID: 3994180524610795761}
   - component: {fileID: -5241286415361877426}
+  - component: {fileID: 2417198397574337328}
   m_Layer: 0
   m_Name: RiceBall
   m_TagString: Player
@@ -151,6 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c98ef51c5e14b244da4d3e3b95f1ec3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isCurrentPlayer: 0
   playerState: 0
   rb: {fileID: 6092146087549542808}
   hitSounds:
@@ -195,3 +197,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ingredients: []
+--- !u!114 &2417198397574337328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5714589198575717757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a19144e322196d4ca43fbfa27262445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

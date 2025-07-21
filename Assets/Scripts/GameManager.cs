@@ -161,6 +161,7 @@ public class GameManager : MonoBehaviour
         currentPlayerBall = null;
         _currentPlayerIndex = -1;
         Sequence seq = DOTween.Sequence();
+        ScoreManager.OnGameOverCalculateScore.Invoke();
         seq.Append(cameraPivot.DOMove(new Vector3(10,10,10), 5f));
         seq.Join( cameraPivot.DORotate(new Vector3(45,30,0), 5f))
             .OnComplete(() =>
