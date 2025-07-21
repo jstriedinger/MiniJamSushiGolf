@@ -29,6 +29,11 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         StartCoroutine(StartGame());
+        
+        _arrowEffect = DOTween.Sequence();
+        _arrowEffect.Append(directionArrow.transform.DOScaleZ(1.5f, 0.5f));
+        _arrowEffect.SetLoops(-1, LoopType.Yoyo);
+        _arrowEffect.Pause().SetAutoKill(false);
     }
 
     private void Awake() 
@@ -61,7 +66,7 @@ public class UIManager : MonoBehaviour
         directionArrow.transform.rotation = Quaternion.LookRotation(direction);
         //position the arrow near ball
         Transform ball = GameManager.Instance.currentPlayerBall.transform;
-        directionArrow.transform.position = ball.position + (ball.forward * 2);
+        directionArrow.transform.position = ball.position + (ball.forward * 1.1f) + (ball.up * -0.25f);
     }
     
     public void ShowDirectionArrow(bool show)
@@ -69,6 +74,14 @@ public class UIManager : MonoBehaviour
         if (directionArrow != null)
         {
             directionArrow.SetActive(show);
+            if (show)
+            {
+                _arrowEffect.Play();
+            }
+            else
+            {
+                _arrowEffect.Pause();
+            }
         }
     }
     
