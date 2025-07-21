@@ -100,7 +100,7 @@ public class SushiGolfHitControl : MonoBehaviour
         if (isFirstTurn)
         {
             isFirstTurn = false;
-            rb.useGravity = true;
+            rb.isKinematic = false;
         }
 
         playerState = PlayerState.Rolling;

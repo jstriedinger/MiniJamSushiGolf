@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
             newPlayer.name = "P" +(i+1);
             //make our ball not move
             Rigidbody rb = newPlayer.GetComponent<Rigidbody>();
-            rb.useGravity = false;
+            rb.isKinematic = true;
             SushiGolfHitControl newPlayerSushiControl = newPlayer.GetComponent<SushiGolfHitControl>();
             newPlayerSushiControl.Setup(minPower, maxPower, rotationSpeed, powerChangeSpeed);
             _players[i] = newPlayerSushiControl;
