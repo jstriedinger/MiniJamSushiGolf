@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,6 +9,8 @@ public class UIManager : MonoBehaviour
 {
     [SerializeField] private TMP_Text playerName;
     [SerializeField] private GameObject directionArrow;
+    private Sequence _arrowEffect;
+    
     [Header("Power bar")]
     public GameObject powerBar;
     private float _maxPower, _minPower = 0;
